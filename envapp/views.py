@@ -2,6 +2,19 @@ import json
 
 from envapp.models import Count
 
+def transformUniqueList(databaseValues):
+    valuesAll = Count.objects.values_list(databaseValues)
+    if databaseValues == "barcode":
+        valuesAll = set(list(valuesAll))
+    else:
+        valuesAll = sorted(set(list(valuesAll)))
+    uniqueList = []
+    for val in valuesAll:
+        for value in val:
+            uniqueList.append(value)
+    return uniqueList
+
+
 def index(request):
     # Opening JSON file
     fileCounts = open('counts.json', )
@@ -31,12 +44,7 @@ def index(request):
         f.write("location;barcode;amount \n")
 
         # Collecting locationCode and transforming unique location
-        locationAll = Count.objects.values_list('locationCode')
-        locationAll = sorted(set(list(locationAll)))
-        locationCodeList= [ ]
-        for loc in locationAll:
-            for val in loc:
-                locationCodeList.append(val)
+        locationCodeList = transformUniqueList('locationCode')
 
         # Writing file process
         for location in locationCodeList:
@@ -48,17 +56,12 @@ def index(request):
                 f.write(x)
         print("Location-Barcode-Amount Report.txt is complete.")
 
-    # Saving data to Barcode-Amount file
+   # Saving data to Barcode-Amount file
     with open('Barcode-Amount Report.txt', 'w') as f:
         f.write("barcode;amount \n")
 
         # Collecting barcode and transforming unique barcode
-        barcodeAll = Count.objects.values_list('barcode')
-        barcodeAll = set(list(barcodeAll))
-        barcodeList= [ ]
-        for brcs in barcodeAll:
-            for brc in brcs:
-                barcodeList.append(brc)
+        barcodeList = transformUniqueList('barcode')
 
         # Writing file process
         for barcode in barcodeList:

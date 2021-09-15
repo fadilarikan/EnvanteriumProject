@@ -2,7 +2,6 @@ import json
 
 from envapp.models import Count
 
-count_path = ''
 def index(request):
     # Opening JSON file
     fileCounts = open('counts.json', )
@@ -10,58 +9,79 @@ def index(request):
     fileMaster = open('master.json', )
     dataMaster = json.load(fileMaster)
 
-    """for i in dataCounts:
-           for j in i["completedCounts"]:
-               for k in j["contents"]:
+    # Writing data to database
+    for data in dataCounts:
+           for counts in data["completedCounts"]:
+               for value in counts["contents"]:
                    count = Count()
-                   count.idLocation = i["id"]
-                   count.barcode = k["barcode"]
-                   count.locationCode = i["locationCode"]
-                   for p in dataMaster:
-                       if k["barcode"] == p["barcode"]:
-                           count.sku = p["sku"]
-                           count.urunAdi = p["urun adi"]
-                   count.amount = k["amount"]
-                   count.save()"""
+                   count.idLocation = data["id"]
+                   count.barcode = value["barcode"]
+                   count.locationCode = data["locationCode"]
+                   for brc in dataMaster:
+                       if value["barcode"] == brc["barcode"]:
+                           count.sku = brc["sku"]
+                           count.urunAdi = brc["urun adi"]
+                   count.amount = value["amount"]
+                   count.save()
+                   print("The data is written to the database.")
+    print("Database writing is complete.")
 
-
+    # Saving data to Location-Barcode-Amount file
     with open('Location-Barcode-Amount Report.txt', 'w') as f:
         f.write("location;barcode;amount \n")
+
+        # Collecting locationCode and transforming unique location
         locationAll = Count.objects.values_list('locationCode')
         locationAll = sorted(set(list(locationAll)))
         locationCodeList= [ ]
-        for i in locationAll:
-            for j in i:
-                locationCodeList.append(j)
+        for loc in locationAll:
+            for val in loc:
+                locationCodeList.append(val)
 
+        # Writing file process
         for location in locationCodeList:
-            values = Count.objects.filter(locationCode = location).values("barcode","amount")
-            for i in values:
-                x = location + ";" +i['barcode'] + ";" + str(i['amount']) + '\n'
-                f.write(x)
 
+            #Filtering by product location
+            values = Count.objects.filter(locationCode = location).values("barcode","amount")
+            for value in values:
+                x = location + ";" +value['barcode'] + ";" + str(value['amount']) + '\n'
+                f.write(x)
+        print("Location-Barcode-Amount Report.txt is complete.")
+
+    # Saving data to Barcode-Amount file
     with open('Barcode-Amount Report.txt', 'w') as f:
         f.write("barcode;amount \n")
+
+        # Collecting barcode and transforming unique barcode
         barcodeAll = Count.objects.values_list('barcode')
         barcodeAll = set(list(barcodeAll))
         barcodeList= [ ]
-        for i in barcodeAll:
-            for j in i:
-                barcodeList.append(j)
+        for brcs in barcodeAll:
+            for brc in brcs:
+                barcodeList.append(brc)
 
+        # Writing file process
         for barcode in barcodeList:
+            # Filtering by product barcode
             values = Count.objects.filter(barcode = barcode).values("amount")
+
+            # counting amount
             amount = 0
-            for i in values:
-                amount += i['amount']
+            for quantity in values:
+                amount += quantity['amount']
             x = barcode + ';' + str(amount) + '\n'
-            print(x)
             f.write(x)
+        print("Barcode-Amount Report.txt is complete.")
 
-
+    # Saving data to Aggregated file
     with open('Aggregated Report.txt', 'w') as f:
         f.write("location;barcode;amount;sku;urun adi \n")
+
+        # Pulling all values(location,barcode,amount,sku,urun adi) in the database
         values = Count.objects.all().values("locationCode","barcode","amount","sku","urunAdi")
-        for i in values:
-            x = i['locationCode'] + ';' + i['barcode'] + ';' + str(i['amount']) + ';' + i['sku'] + ';' + i['urunAdi'] + '\n'
+
+        # Writing file process
+        for value in values:
+            x = value['locationCode'] + ';' + value['barcode'] + ';' + str(value['amount']) + ';' + value['sku'] + ';' + value['urunAdi'] + '\n'
             f.write(x)
+        print("Aggregated Report.txt is complete.")

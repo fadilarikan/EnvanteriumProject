@@ -39,9 +39,13 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'envapp',
+    'corsheaders',
 ]
 
+CORS_ORIGIN_ALLOW_ALL = True
+
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -79,7 +83,11 @@ WSGI_APPLICATION = 'EnvanteriumProject.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'djongo',
-        'NAME': 'envanteriumdatabase',
+        'CLIENT':{
+            "host": "mongodb+srv://fadil:fadil123@cluster0.ofimw.mongodb.net/myFirstDatabase?retryWrites=true&w=majority",
+            "name" : "envanteriumdatabase",
+            "authMechanism":"SCRAM-SHA-1"
+        }
     }
 }
 
